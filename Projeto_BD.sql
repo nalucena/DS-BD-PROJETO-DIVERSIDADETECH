@@ -7,23 +7,21 @@ CREATE VIEW produtos_cancelados_2 AS (
 	CAST (REPLACE(p."Preco", '$', '') AS NUMERIC) AS "Preco_2" 
 	FROM vendas v, produtos p
 	WHERE v."Codigo" = p."Codigo" AND "Courier Status" = 'Cancelled' 
-	ORDER BY CAST (REPLACE(p."Preco", '$', '') AS NUMERIC) DESC 
-	
+	ORDER BY CAST (REPLACE(p."Preco", '$', '') AS NUMERIC) desc
+)
+
 -- Segunda View -> Classificando os cancelamentos por faixa de preço
 	-- Foi realizada a classificação, quantificação, agrupamento e ordenação dos dados em base descrescente.
 	
 CREATE VIEW faixas_cancelados as
-SELECT sum("Qty") AS "numero_de_cancelamentos",
-	CASE 
-		WHEN (produtos_cancelados_2."Preco_2" <= 100) THEN '0 - 100'
-		WHEN (produtos_cancelados_2."Preco_2" <= 200) THEN '101 - 200'
-		WHEN (produtos_cancelados_2."Preco_2" <= 300) THEN '201 - 300'
-		WHEN (produtos_cancelados_2."Preco_2" <= 400) THEN '301 - 400'
-		ELSE '400+'
-		
-		--WHEN (produtos_cancelados_2."Preco_2" > 400) THEN '400+'-- 
-		
-	END AS faixa_de_preco
+	SELECT sum("Qty") AS "numero_de_cancelamentos",
+		CASE 
+			WHEN (produtos_cancelados_2."Preco_2" <= 100) THEN '0 - 100'
+			WHEN (produtos_cancelados_2."Preco_2" <= 200) THEN '101 - 200'
+			WHEN (produtos_cancelados_2."Preco_2" <= 300) THEN '201 - 300'
+			WHEN (produtos_cancelados_2."Preco_2" <= 400) THEN '301 - 400'
+			ELSE '400+'
+		END AS faixa_de_preco
 FROM produtos_cancelados_2
 GROUP BY faixa_de_preco
 ORDER BY "numero_de_cancelamentos" DESC; 
@@ -60,9 +58,24 @@ ORDER BY "numero_de_vendas" DESC;
 -- Quinta View -> Proporção de vendas canceladas por faixa de preço
 
 CREATE VIEW proporcao_de_cancelamentos AS (
-	SELECT fc."faixa_de_preco", fv."faixa_de_preco", fc."numero_de_cancelamentos", fv."numero_de_vendas", 
-(100 * fc."numero_de_cancelamentos"/fv."numero_de_vendas") AS "percentual_de_cancelamentos"
+SELECT fc."faixa_de_preco" as cancelados_vendas, fv."faixa_de_preco" as vendas_precos, fc."numero_de_cancelamentos", fv."numero_de_vendas", 
+	(100 * fc."numero_de_cancelamentos"/fv."numero_de_vendas") AS "percentual_de_cancelamentos"
 	FROM faixas_cancelados fc
 	INNER JOIN faixas_vendas fv  
 	ON fc."faixa_de_preco" = fv."faixa_de_preco"
+)
+
+CREATE VIEW max_vendas_preco AS (
+SELECT p."Codigo" AS "Codigo_Produto", p."Produto", 
+CAST (REPLACE(p."Preco", '$', '') AS decimal) AS Preco, 
+v."Codigo" AS "Codigo_Venda", v."Courier Status", v."Qty", v."Date"
+FROM vendas v, produtos p
+WHERE p."Codigo" = v."Codigo" AND "Courier Status" = 'Shipped'
+)
+
+CREATE VIEW max_produtos_vendas AS (
+SELECT sum(mx."Qty") AS total_vendas, mx."Produto", mx."preco"
+FROM max_vendas_preco mx
+GROUP BY mx."Produto", mx."preco"
+ORDER BY total_vendas DESC
 )

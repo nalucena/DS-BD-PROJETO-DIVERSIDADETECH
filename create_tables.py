@@ -7,9 +7,9 @@ from sqlalchemy import create_engine
 
 # cria uma conexão com o banco postgres
 # string de conexão: postgresql://usuário:senha@localhost:5432/nomebanco
-engine = create_engine('postgresql://postgres:chja1415@localhost:5432/ecommerce')
+engine = create_engine('postgresql://postgres:postgres@localhost:5432/ecommerce')
 
-for file_name in ["aula 7\/produtos.csv", "aula 7\/vendas.csv"]:
+for file_name in ["produtos.csv", "vendas.csv"]:
 	df = pd.read_csv(file_name, sep=',')
 	df = df.loc[:, ~df.columns.str.contains('^Unnamed')].copy()
 
